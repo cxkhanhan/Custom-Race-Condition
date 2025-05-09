@@ -1,3 +1,7 @@
+## 效果图:
+
+![image-20250510001009144](https://raw.githubusercontent.com/cxkhanhan/tu_chuang/main/image-20250510001009144.png)
+
 ## 总览
 
 ```
@@ -218,80 +222,6 @@ python310.exe new.py -m1 get -m2 get -u1 http://127.0.0.1:9046/read -u2 http://1
 总发包量2*batch
 
 检测到CTF{字符串就结束条件竞争
-
-### 其他:做个开发笔记跟脚本无关
-
-**复用Session减少连接开销**
-
-- 在并发请求（如条件竞争漏洞测试）时，复用`requests.Session()`或`aiohttp.ClientSession`
-
-- **优势**：避免重复TCP握手/SSL协商，提升20%~50%吞吐量
-
-- **示例**：
-
-  ```
-  async with aiohttp.ClientSession() as session:  # 全局复用
-      tasks = [send_request(session) for _ in range(100)]
-      await asyncio.gather(*tasks)
-  ```
-
-**把一些数据处理等等都写在外面**
-
-**数据预处理原则**
-
- - **循环外预处理**：
-
-   - 将**固定的数据计算**（如加密、签名）提前处理
-   - 避免在循环中重复初始化工具（如`hashlib.md5()`）
-
- - **示例**：
-
-   ```
-   # 错误：循环内重复计算
-   for i in range(1000):
-       data = expensive_processing(input)  # 每次循环都计算
-       send(data)
-   
-   # 正确：提前计算
-   processed_data = expensive_processing(input)  # 只算1次
-   for i in range(1000):
-       send(processed_data)
-   ```
-
-------
-
-
-
-最终需要循环发包的代码不要添加太多垃圾和其他数据处理
-
-能在循环之前处理就处理
-
- **保持发包循环纯净**
-
-- 循环内**只保留必要网络I/O**（如`requests.post()`）
-- 禁止在循环内：
-  - 日志打印（应异步记录）
-  - 复杂业务逻辑（应提前处理）
-- **坏味道检测**：如果循环内有`if/else`分支，大概率需要重构
-
-虽然asyncio.gather(*tasks)里的任务顺序好像是根据系统那边的去调度顺序没有说一定是按照tasks数组的顺序
-
-但是按照调度顺序也基本是正常的顺序很少会打乱
-
-但是返回的结果是按照顺序的
-
-**asyncio.gather的任务顺序规则**
-
-- **输入顺序**：`gather(t1, t2, t3)`的**返回结果顺序**保证与输入一致
-
-- **执行顺序**：任务实际执行是**乱序**的（取决于事件循环调度）
-
-- **关键结论**：
-
-  ```
-  # 返回的results顺序一定是 [r1, r2, r3]
-  r1, r2, r3 = await asyncio.gather(task1(), task2(), task3())
-  ```
 
 author:han
 
