@@ -1,0 +1,4 @@
+# This file lists the external Python libraries required by the project.
+# Standard libraries (like sys, threading, asyncio, etc.) are not included.
+
+aiohttp
